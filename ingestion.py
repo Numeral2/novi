@@ -66,3 +66,4 @@ for doc in raw_documents:
 
 print(f"✅ Ukupno dodano {chunk_count} chunkova u Pinecone.")
 
+
