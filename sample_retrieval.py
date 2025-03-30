@@ -1,5 +1,5 @@
-# import basics
 import os
+import streamlit as st
 from dotenv import load_dotenv
 
 # import pinecone
@@ -12,46 +12,35 @@ from langchain_core.documents import Document
 
 load_dotenv()
 
-# initialize pinecone database
+# Initialize Pinecone database
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 
-# set the pinecone index
-
-index_name = "qucikstar2"
+# Set the Pinecone index
+index_name = "quickstar2"  # Ensure index name matches the one used for chunking
 index = pc.Index(index_name)
 
-# initialize embeddings model + vector store
-
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small",api_key=os.environ.get("OPENAI_API_KEY"))
+# Initialize embeddings model + vector store
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=os.environ.get("OPENAI_API_KEY"))
 vector_store = PineconeVectorStore(index=index, embedding=embeddings)
 
-# retrieval
-'''
+# Streamlit UI to accept query
+st.title("Query Pinecone Index")
+query = st.text_input("Ask a question:")
 
-###### add docs to db ##############################
-results = vector_store.similarity_search_with_score(
-    "what did you have for breakfast?",
-    #k=2,
-    filter={"source": "tweet"},
-)
+if query:
+    # Retrieval setup with similarity-based search
+    retriever = vector_store.as_retriever(
+        search_type="similarity_score_threshold",  # Ensures only relevant results are returned
+        search_kwargs={"k": 5, "score_threshold": 0.6},  # k=5 means top 5 results with score threshold
+    )
 
-print("RESULTS:")
+    # Perform the search (retrieve relevant chunks)
+    results = retriever.invoke(query)
 
-for res in results:
-    print(f"* {res[0].page_content} [{res[0].metadata}] -- {res[1]}")
-
-'''
-
-retriever = vector_store.as_retriever(
-    search_type="similarity_score_threshold",
-    search_kwargs={"k": 5, "score_threshold": 0.6},
-)
-results = retriever.invoke("what did you have for breakfast?")
-
-print("RESULTS:")
-
-for res in results:
-    print(f"* {res.page_content} [{res.metadata}]")
-
-#'''
+    # Display the results
+    st.write("Results:")
+    for res in results:
+        st.write(f"**Content**: {res.page_content}")
+        st.write(f"**Metadata**: {res.metadata}")
+        st.write(f"**Score**: {res.score}")
 
