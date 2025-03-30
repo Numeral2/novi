@@ -2,7 +2,6 @@ import streamlit as st
 from pinecone import Pinecone
 from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
-from langchain_core.documents import Document
 
 # Streamlit UI za unos API ključeva i naziva indeksa
 st.title("Retrieval Augmented Generation (RAG)")
@@ -20,7 +19,7 @@ if pinecone_api_key and openai_api_key and index_name:
     index = pc.Index(index_name)
 
     # Inicijalizacija OpenAI embeddings modela i Pinecone Vector Store
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key)
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key)  # Adjusted to ada-003
     vector_store = PineconeVectorStore(index=index, embedding=embeddings)
 
     # Postavljanje retriever-a
@@ -37,7 +36,6 @@ if pinecone_api_key and openai_api_key and index_name:
         # Prikazivanje rezultata
         st.subheader("Results:")
         for res in results:
-            st.markdown(f"* {res.page_content} [{res.metadata}]")
+            st.markdown(f"* {res.page_content} [Source: {res.metadata.get('source', 'No source info')}]")
 else:
     st.warning("Please enter all required fields (API keys and index name).")
-
