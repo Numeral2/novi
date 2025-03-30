@@ -11,11 +11,11 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 
-#documents
+# documents
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-load_dotenv() 
+load_dotenv()
 
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 
@@ -38,38 +38,42 @@ if index_name not in existing_indexes:
 index = pc.Index(index_name)
 
 # initialize embeddings model + vector store
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small",api_key=os.environ.get("OPENAI_API_KEY"))
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=os.environ.get("OPENAI_API_KEY"))
 
 vector_store = PineconeVectorStore(index=index, embedding=embeddings)
 
-
 # loading the PDF document
 loader = PyPDFDirectoryLoader("documents/")
-
 raw_documents = loader.load()
 
-# splitting the document
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=800,
-    chunk_overlap=400,
-    length_function=len,
-    is_separator_regex=False,
-)
+# function to split text based on byte size
+def split_by_bytes(text, max_bytes=40000, overlap_bytes=2000):
+    chunks = []
+    start = 0
+    encoded_text = text.encode("utf-8")  # Convert to bytes
 
-# creating the chunks
-documents = text_splitter.split_documents(raw_documents)
+    while start < len(encoded_text):
+        end = start + max_bytes
+        chunk = encoded_text[start:end].decode("utf-8", errors="ignore")  # Decode safely
+        chunks.append(chunk)
+        start += max_bytes - overlap_bytes  # Overlap to maintain context
 
-# generate unique id's
+    return chunks
 
-i = 0
-uuids = []
+# process documents
+final_documents = []
+doc_id = 1
 
-while i < len(documents):
+for doc in raw_documents:
+    chunks = split_by_bytes(doc.page_content)  # Split into valid byte-sized chunks
+    for chunk in chunks:
+        final_documents.append(Document(page_content=chunk, metadata=doc.metadata))
 
-    i += 1
-
-    uuids.append(f"id{i}")
+# generate unique ids
+uuids = [f"id{i}" for i in range(1, len(final_documents) + 1)]
 
 # add to database
+vector_store.add_documents(documents=final_documents, ids=uuids)
 
-vector_store.add_documents(documents=documents, ids=uuids)
+print(f"Successfully added {len(final_documents)} chunks to Pinecone.")
+
