@@ -16,7 +16,7 @@ load_dotenv()
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 
 # initialize pinecone database
-index_name = "sample-index"  # change if desired
+index_name = "quickstar2"  # change if desired
 
 # check whether index exists, and create if not
 existing_indexes = [index_info["name"] for index_info in pc.list_indexes()]
@@ -24,7 +24,7 @@ existing_indexes = [index_info["name"] for index_info in pc.list_indexes()]
 if index_name not in existing_indexes:
     pc.create_index(
         name=index_name,
-        dimension=3072,
+        dimension=1536,
         metric="cosine",
         spec=ServerlessSpec(cloud="aws", region="us-east-1"),
     )
@@ -34,7 +34,7 @@ if index_name not in existing_indexes:
 index = pc.Index(index_name)
 
 # initialize embeddings model + vector store
-embeddings = OpenAIEmbeddings(model="text-embedding-3-large",api_key=os.environ.get("OPENAI_API_KEY"))
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small",api_key=os.environ.get("OPENAI_API_KEY"))
 
 vector_store = PineconeVectorStore(index=index, embedding=embeddings)
 
