@@ -4,6 +4,7 @@ import pdfplumber  # For extracting text from PDF
 from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone
+from langchain.chat_models import ChatOpenAI  # Import ChatOpenAI
 
 # Streamlit UI for user input (API keys and index name)
 st.title("Chatbot with PDF Upload")
