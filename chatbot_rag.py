@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import pdfplumber  # For extracting text from PDF
 import numpy as np
 from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import PineconeVectorStore
+from langchain_pinecone import PineconeVectorStore
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 from pinecone import Pinecone, ServerlessSpec
