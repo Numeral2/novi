@@ -23,7 +23,7 @@ if pinecone_api_key and pinecone_index_name:
     index = pc.Index(pinecone_index_name)
 
     # Initialize embeddings model + vector store
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-large", api_key=openai_api_key)
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key)
     vector_store = PineconeVectorStore(index=index, embedding=embeddings)
 
     # Helper function to chunk text into smaller parts
