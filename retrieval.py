@@ -22,7 +22,7 @@ index = pc.Index(index_name)
 
 # initialize embeddings model + vector store
 
-embeddings = OpenAIEmbeddings(model="text-embedding-3-large",api_key=os.environ.get("OPENAI_API_KEY"))
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small",api_key=os.environ.get("OPENAI_API_KEY"))
 vector_store = PineconeVectorStore(index=index, embedding=embeddings)
 
 # retrieval
