@@ -1,39 +1,43 @@
-# import basics
-import os
-from dotenv import load_dotenv
-
-# import pinecone
-from pinecone import Pinecone, ServerlessSpec
-
-# import langchain
+import streamlit as st
+from pinecone import Pinecone
 from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 
-load_dotenv()
+# Streamlit UI za unos API ključeva i naziva indeksa
+st.title("Retrieval Augmented Generation (RAG)")
 
-# initialize pinecone database
-pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
+# Unos API ključeva i naziva indeksa putem Streamlit UI
+pinecone_api_key = st.text_input("Enter your Pinecone API Key", type="password")
+openai_api_key = st.text_input("Enter your OpenAI API Key", type="password")
+index_name = st.text_input("Enter your Pinecone Index Name")
 
-# set the pinecone index
+if pinecone_api_key and openai_api_key and index_name:
+    # Inicijalizacija Pinecone-a sa korisnički unesenim API ključem
+    pc = Pinecone(api_key=pinecone_api_key)
 
-index_name = os.environ.get("PINECONE_INDEX_NAME") 
-index = pc.Index(index_name)
+    # Inicijalizacija indeksa
+    index = pc.Index(index_name)
 
-# initialize embeddings model + vector store
+    # Inicijalizacija OpenAI embeddings modela i Pinecone Vector Store
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key)
+    vector_store = PineconeVectorStore(index=index, embedding=embeddings)
 
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small",api_key=os.environ.get("OPENAI_API_KEY"))
-vector_store = PineconeVectorStore(index=index, embedding=embeddings)
+    # Postavljanje retriever-a
+    retriever = vector_store.as_retriever(
+        search_type="similarity_score_threshold",
+        search_kwargs={"k": 5, "score_threshold": 0.5},
+    )
 
-# retrieval
-retriever = vector_store.as_retriever(
-    search_type="similarity_score_threshold",
-    search_kwargs={"k": 5, "score_threshold": 0.5},
-)
-results = retriever.invoke("what is retrieval augmented generation?")
+    # Izvršavanje pretrage
+    query = st.text_input("Ask a question", "What is retrieval augmented generation?")
+    if query:
+        results = retriever.invoke(query)
 
-# show results
-print("RESULTS:")
+        # Prikazivanje rezultata
+        st.subheader("Results:")
+        for res in results:
+            st.markdown(f"* {res.page_content} [{res.metadata}]")
+else:
+    st.warning("Please enter all required fields (API keys and index name).")
 
-for res in results:
-    print(f"* {res.page_content} [{res.metadata}]")
