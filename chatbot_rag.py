@@ -45,7 +45,10 @@ if pinecone_api_key and pinecone_index_name:
 
     if uploaded_file:
         with pdfplumber.open(uploaded_file) as pdf:
-            text = "".join([page.extract_text() for page in pdf.pages if page.extract_text()])
+            text = ""
+            for page in pdf.pages:
+                # Extract text while ignoring tables and images
+                text += page.extract_text() or ""  # Only append if text is available
 
         # Chunk the text
         chunks = chunk_text(text)
@@ -118,3 +121,4 @@ if pinecone_api_key and pinecone_index_name:
 
 else:
     st.warning("Please enter your API keys and index name.")
+
