@@ -35,7 +35,12 @@ index = pc.Index(index_name)
 
 # Initialize OpenAI embeddings model and Pinecone vector store
 embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key)
-vector_store = PineconeVectorStore(index=index, embedding=embeddings, namespace="pdf_chunks")
+
+# **Always use "pdf_chunks" as namespace**
+namespace = "pdf_chunks"
+
+# Initialize Pinecone vector store with specified namespace
+vector_store = PineconeVectorStore(index=index, embedding=embeddings, namespace=namespace)
 
 # Get user input for the directory containing PDFs
 pdf_directory_path = input("Enter the directory path containing your PDFs: ")
@@ -71,7 +76,9 @@ else:
 for i, chunk in enumerate(chunks):
     metadata = {"source": f"Document {i}", "chunk_index": i}  # Customize metadata as needed
     document = Document(page_content=chunk, metadata=metadata)
-    vector_store.add_documents(documents=[document], ids=[f"id_{i}"], namespace="pdf_chunks")
+    
+    # Always store in "pdf_chunks" namespace
+    vector_store.add_documents(documents=[document], ids=[f"id_{i}"], namespace=namespace)
 
-print(f"Added {len(chunks)} chunks to Pinecone in namespace 'pdf_chunks'.")
+print(f"Added {len(chunks)} chunks to Pinecone in namespace '{namespace}'.")
 
