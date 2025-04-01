@@ -1,12 +1,12 @@
 import os
 import time
+import pdfplumber  # Using pdfplumber for PDF text extraction
 
 # Import Pinecone and Langchain
 from pinecone import Pinecone, ServerlessSpec
 from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
-from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # Get user input for Pinecone API key and index name
@@ -36,7 +36,7 @@ index = pc.Index(index_name)
 # Initialize OpenAI embeddings model and Pinecone vector store
 embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key)
 
-# **Always use "pdf_chunks" as namespace**
+# Always use "pdf_chunks" as namespace
 namespace = "pdf_chunks"
 
 # Initialize Pinecone vector store with specified namespace
@@ -45,9 +45,23 @@ vector_store = PineconeVectorStore(index=index, embedding=embeddings, namespace=
 # Get user input for the directory containing PDFs
 pdf_directory_path = input("Enter the directory path containing your PDFs: ")
 
+# Function to extract text from PDFs using pdfplumber
+def extract_text_from_pdf(pdf_path):
+    with pdfplumber.open(pdf_path) as pdf:
+        text = ""
+        for page in pdf.pages:
+            text += page.extract_text()  # Extract only text, ignoring images and tables
+        return text
+
 # Load PDFs from the specified directory
-loader = PyPDFDirectoryLoader(pdf_directory_path)
-raw_documents = loader.load()
+raw_documents = []
+for filename in os.listdir(pdf_directory_path):
+    if filename.endswith(".pdf"):
+        pdf_path = os.path.join(pdf_directory_path, filename)
+        text = extract_text_from_pdf(pdf_path)
+        
+        if text.strip():  # Ensure the extracted text is not empty
+            raw_documents.append(text)
 
 # Check if documents are being loaded correctly
 if not raw_documents:
